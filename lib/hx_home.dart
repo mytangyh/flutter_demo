@@ -46,6 +46,13 @@ class _HomePageState extends State<HomePage> {
     },
   ];
 
+  // 日志记录函数
+  void _logUserAction(String action) {
+    final DateTime now = DateTime.now();
+    final String timestamp = now.toIso8601String();
+    print('[$timestamp] User action: $action');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,7 +62,7 @@ class _HomePageState extends State<HomePage> {
       body: Column(
         children: <Widget>[
           // 滑动 Banner
-          Container(
+          SizedBox(
             height: 200,
             child: PageView.builder(
               controller: _pageController,
@@ -63,11 +70,13 @@ class _HomePageState extends State<HomePage> {
               onPageChanged: (int index) {
                 setState(() {
                   _currentPage = index;
+                  _logUserAction('Banner changed to ${banners[index]['title']}');
                 });
               },
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
+                    _logUserAction('Tapped on ${banners[index]['title']} banner');
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -129,6 +138,7 @@ class _HomePageState extends State<HomePage> {
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
+                    _logUserAction('Tapped on ${items[index]['title']} item');
                     Navigator.push(
                       context,
                       MaterialPageRoute(

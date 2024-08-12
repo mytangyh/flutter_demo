@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'hx_account.dart';
+import 'hx_home.dart';
+import 'hx_news.dart';
+import 'hx_solution.dart';
 
 void main() {
   runApp(MyApp());
@@ -21,17 +25,42 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    Text('Home Page'),
-    Text('Solution Page'),
-    Text('News Page'),
-    Text('Account Page'),
+  static List<Widget> _widgetOptions = <Widget>[
+    HomePage(),
+    SolutionPage(),
+    NewsPage(),
+    AccountPage(),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      _logUserAction('Tapped on tab ${_getTabName(index)}');
     });
+  }
+
+  // 返回当前选中标签页的名称
+  String _getTabName(int index) {
+    switch (index) {
+      case 0:
+        return 'Home';
+      case 1:
+        return 'Solution';
+      case 2:
+        return 'News';
+      case 3:
+        return 'Account';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  // 日志记录函数
+  void _logUserAction(String action) {
+    final DateTime now = DateTime.now();
+    final String timestamp = now.toIso8601String();
+    print('[$timestamp] User action: $action');
+    // 在这里可以扩展，例如将日志发送到服务器或保存到本地文件中
   }
 
   @override
