@@ -60,6 +60,7 @@ class _HomePageState extends State<HomePage> {
         title: Text('Home Page'),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           // 滑动 Banner
           SizedBox(
@@ -130,6 +131,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               );
             }),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 16,horizontal: 24),
+            child: Text(
+              'Product List',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.left, // 左对齐
+            ),
           ),
           // 卡片列表
           Expanded(
