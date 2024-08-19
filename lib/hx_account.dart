@@ -15,18 +15,46 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// 单例类，用于在内存中保存全局状态
+class AppState {
+  static final AppState _instance = AppState._internal();
+
+  bool isSignedIn = false;
+  String email = '';
+
+  factory AppState() {
+    return _instance;
+  }
+
+  AppState._internal();
+}
+
 class AccountPage extends StatefulWidget {
   @override
   _AccountPageState createState() => _AccountPageState();
 }
 
 class _AccountPageState extends State<AccountPage> {
-  bool _isSignedIn = false;  // 初始状态为未登录
   TextEditingController _emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // 加载全局状态
+    _emailController.text = AppState().email;
+  }
 
   void _toggleSignInState() {
     setState(() {
-      _isSignedIn = !_isSignedIn;
+      AppState().isSignedIn = !AppState().isSignedIn;
+      if (AppState().isSignedIn) {
+        // 登录时保存邮箱
+        AppState().email = _emailController.text;
+      } else {
+        // 登出时清除邮箱
+        _emailController.clear();
+        AppState().email = '';
+      }
     });
   }
 
@@ -43,7 +71,7 @@ class _AccountPageState extends State<AccountPage> {
           children: <Widget>[
             TextFormField(
               controller: _emailController,
-              readOnly: _isSignedIn,  // 登录后禁止编辑邮箱
+              readOnly: AppState().isSignedIn,  // 登录后禁止编辑邮箱
               decoration: InputDecoration(
                 labelText: 'Email',
                 border: OutlineInputBorder(),
@@ -51,17 +79,11 @@ class _AccountPageState extends State<AccountPage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                if (_isSignedIn) {
-                  // 如果已经登录，则登出并清空邮箱输入框
-                  _emailController.clear();
-                }
-                _toggleSignInState();
-              },
+              onPressed: _toggleSignInState,
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 50),
               ),
-              child: Text(_isSignedIn ? 'Sign Out Email' : 'Sign In Email'),
+              child: Text(AppState().isSignedIn ? 'Sign Out Email' : 'Sign In Email'),
             ),
           ],
         ),
