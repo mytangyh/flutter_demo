@@ -1,17 +1,7 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: AccountPage(),
-    );
-  }
-}
+import 'hx_home.dart';
+import 'hx_market.dart';
 
 class AccountPage extends StatefulWidget {
   @override
@@ -19,14 +9,21 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-  bool isSignedIn = false; // 初始状态为未登录
-  final TextEditingController emailController = TextEditingController();
+  String pageId = "00004";
+  String pageName = "AccountPage";
+  bool _isSignedIn = false; // 初始状态为未登录
+  TextEditingController _emailController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  void _toggleSignInOut() {
+  void _toggleSignInState() {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        isSignedIn = !isSignedIn;
+        _isSignedIn = !_isSignedIn;
+        if (_isSignedIn) {
+          // HithinkTracking.loginAccount(_emailController.text);
+        } else {
+          // HithinkTracking.logoutAccount();
+        }
       });
     }
   }
@@ -42,7 +39,7 @@ class _AccountPageState extends State<AccountPage> {
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
@@ -51,19 +48,17 @@ class _AccountPageState extends State<AccountPage> {
               ),
               SizedBox(height: 8),
               TextFormField(
-                controller: emailController,
-                readOnly: isSignedIn,
-                style: TextStyle(
-                  color: isSignedIn ? Colors.grey : Colors.black,
-                ),
+                controller: _emailController,
+                readOnly: _isSignedIn,
+                // 登录后禁止编辑邮箱
+                style:
+                    TextStyle(color: _isSignedIn ? Colors.grey : Colors.black),
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  hintText: 'Enter your email',
-                ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0)),
+                    hintText: 'Enter your email'),
                 validator: (value) {
-                  if (!isSignedIn && (value == null || value.isEmpty)) {
+                  if (!_isSignedIn && (value == null || value.isEmpty)) {
                     return 'Email cannot be empty';
                   }
                   return null;
@@ -71,22 +66,49 @@ class _AccountPageState extends State<AccountPage> {
               ),
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _toggleSignInOut,
-                child: Text(isSignedIn ? 'Sign Out Email' : 'Sign In Email'),
+                onPressed: () {
+                  // HithinkTracking.doClick(pageId, pageName,
+                  //     elementModuleName: "0001",
+                  //     elementName: "LoginButton",
+                  //     extendParam: {
+                  //       'clientTime': DateTime.timestamp().toString()
+                  //     }
+                  // );
+
+                  _toggleSignInState();
+                },
                 style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.blue,
-                  shadowColor: Colors.white,
-                  textStyle: TextStyle(fontSize: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
+                  minimumSize: Size(double.infinity, 50),
                 ),
+                child: Text(_isSignedIn ? 'Sign Out Email' : 'Sign In Email'),
               ),
+              SizedBox(height: 16),
+              if (_isSignedIn)
+                ElevatedButton(
+                  onPressed: () {
+                    // HithinkTracking.doClick(pageId, pageName,
+                    //     elementModuleName: "0001",
+                    //     elementName: "LoginButton",
+                    //     extendParam: {
+                    //       'clientTime': DateTime.timestamp().toString()
+                    //     }
+                    // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => InviteCodePage(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(double.infinity, 50),
+                  ),
+                  child: Text('GoTo'),
+                ),
             ],
           ),
         ),
       ),
-      backgroundColor: Colors.white,
     );
   }
 }
