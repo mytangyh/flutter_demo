@@ -3,6 +3,7 @@ import 'hx_account.dart';
 import 'hx_home.dart';
 import 'hx_news.dart';
 import 'hx_solution.dart';
+import 'navi.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,7 +14,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: MyHomePage(),
+      navigatorObservers: [MyNavigatorObserver()],
     );
+  }
+}
+
+class MyNavigatorObserver extends NavigatorObserver {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    super.didPush(route, previousRoute);
+    print('Page entered: ${route.settings.name}');
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    super.didPop(route, previousRoute);
+    print('Page exited: ${route.settings.name}');
   }
 }
 
@@ -34,8 +50,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _onItemTapped(int index) {
     setState(() {
+      _logUserAction('Exiting ${_getTabName(_selectedIndex)}');
       _selectedIndex = index;
-      _logUserAction('Tapped on tab ${_getTabName(index)}');
+      _logUserAction('Entering ${_getTabName(_selectedIndex)}');
     });
   }
 

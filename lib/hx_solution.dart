@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
-class SolutionPage extends StatelessWidget {
+class SolutionPage extends StatefulWidget {
+  @override
+  State<SolutionPage> createState() => _SolutionPageState();
+}
+
+class _SolutionPageState extends State<SolutionPage> {
   final List<Map<String, String>> solutions = [
     {'title': 'BigData', 'description': 'Solution Description'},
     {'title': 'User Marketing', 'description': 'Solution Description'},
@@ -19,7 +24,7 @@ class SolutionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Solutions'),
+        title: Text('Solution'),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
