@@ -56,10 +56,10 @@ class _AccountPageState extends State<AccountPage> {
                 decoration: InputDecoration(
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0)),
-                    hintText: 'Enter your email'),
+                    hintText: 'Enter your email '),
                 validator: (value) {
                   if (!_isSignedIn && (value == null || value.isEmpty)) {
-                    return 'Email cannot be empty';
+                    return 'Email cannot be empty ';
                   }
                   return null;
                 },
