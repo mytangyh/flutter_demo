@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter_demo/models/exchange_record.dart';
+import '../models/exchange_record.dart';
 import '../models/exchange_types.dart';
 import '../models/market_types.dart';
 
@@ -60,53 +60,55 @@ class QuerySecurityInfo extends ExchangeEvent {
 }
 
 // States
-abstract class ExchangeState extends Equatable {
-  @override
-  List<Object?> get props => [];
-}
-
-class ExchangeInitial extends ExchangeState {}
-
-class ExchangeLoading extends ExchangeState {}
-
-class ExchangeLoaded extends ExchangeState {
+class ExchangeState extends Equatable {
+  final MarketType currentMarket;
   final List<ExchangeRecord> records;
+  final bool isLoading;
+  final bool isSubmitting;
+  final String? error;
+  final String? availableAmount;
 
-  ExchangeLoaded(this.records);
-
-  @override
-  List<Object?> get props => [records];
-}
-
-class ExchangeError extends ExchangeState {
-  final String message;
-
-  ExchangeError(this.message);
-
-  @override
-  List<Object?> get props => [message];
-}
-
-class ExchangeSubmitting extends ExchangeState {}
-
-class ExchangeSubmitSuccess extends ExchangeState {}
-
-class SecurityInfoLoaded extends ExchangeState {
-  final String name;
-  final String availableAmount;
-
-  SecurityInfoLoaded({
-    required this.name,
-    required this.availableAmount,
+  const ExchangeState({
+    this.currentMarket = MarketType.sh,
+    this.records = const [],
+    this.isLoading = false,
+    this.isSubmitting = false,
+    this.error,
+    this.availableAmount,
   });
 
+  ExchangeState copyWith({
+    MarketType? currentMarket,
+    List<ExchangeRecord>? records,
+    bool? isLoading,
+    bool? isSubmitting,
+    String? error,
+    String? availableAmount,
+  }) {
+    return ExchangeState(
+      currentMarket: currentMarket ?? this.currentMarket,
+      records: records ?? this.records,
+      isLoading: isLoading ?? this.isLoading,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
+      error: error,
+      availableAmount: availableAmount,
+    );
+  }
+
   @override
-  List<Object?> get props => [name, availableAmount];
+  List<Object?> get props => [
+        currentMarket,
+        records,
+        isLoading,
+        isSubmitting,
+        error,
+        availableAmount,
+      ];
 }
 
 // Bloc
 class ExchangeBloc extends Bloc<ExchangeEvent, ExchangeState> {
-  ExchangeBloc() : super(ExchangeInitial()) {
+  ExchangeBloc() : super(ExchangeState()) {
     on<LoadExchangeData>(_onLoadExchangeData);
     on<SubmitExchangeForm>(_onSubmitExchangeForm);
     on<QuerySecurityInfo>(_onQuerySecurityInfo);
@@ -116,7 +118,6 @@ class ExchangeBloc extends Bloc<ExchangeEvent, ExchangeState> {
     LoadExchangeData event,
     Emitter<ExchangeState> emit,
   ) async {
-    emit(ExchangeLoading());
     try {
       final records = [
         ExchangeRecord(
@@ -128,9 +129,16 @@ class ExchangeBloc extends Bloc<ExchangeEvent, ExchangeState> {
           purchaserCode: event.market == MarketType.sz ? 'P001' : '',
         ),
       ];
-      emit(ExchangeLoaded(records));
+      emit(state.copyWith(
+        records: records,
+        isLoading: false,
+        error: null,
+      ));
     } catch (e) {
-      emit(ExchangeError(e.toString()));
+      emit(state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      ));
     }
   }
 
@@ -138,14 +146,16 @@ class ExchangeBloc extends Bloc<ExchangeEvent, ExchangeState> {
     SubmitExchangeForm event,
     Emitter<ExchangeState> emit,
   ) async {
-    emit(ExchangeSubmitting());
+    emit(state.copyWith(isSubmitting: true));
     try {
-      // TODO: 实现实际的提交逻辑
       await Future.delayed(Duration(seconds: 1)); // 模拟网络请求
-      emit(ExchangeSubmitSuccess());
+      emit(state.copyWith(isSubmitting: false));
       add(LoadExchangeData(market: event.market, type: event.type));
     } catch (e) {
-      emit(ExchangeError(e.toString()));
+      emit(state.copyWith(
+        isSubmitting: false,
+        error: e.toString(),
+      ));
     }
   }
 
@@ -154,18 +164,16 @@ class ExchangeBloc extends Bloc<ExchangeEvent, ExchangeState> {
     Emitter<ExchangeState> emit,
   ) async {
     try {
-      // TODO: 实现实际的证券信息查询逻辑
-      await Future.delayed(Duration(milliseconds: 500)); // 模拟网络请求
+      await Future.delayed(Duration(milliseconds: 500));
       
-      // 模拟返回数据
       if (event.code.length == 6) {
-        emit(SecurityInfoLoaded(
-          name: '测试股票',
+        emit(state.copyWith(
           availableAmount: '10000',
+          error: null,
         ));
       }
     } catch (e) {
-      emit(ExchangeError(e.toString()));
+      emit(state.copyWith(error: e.toString()));
     }
   }
 } 

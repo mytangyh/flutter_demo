@@ -92,6 +92,17 @@ class ExchangePage extends StatelessWidget {
               tabs: MarketType.values
                   .map((market) => Tab(text: market.displayName(type)))
                   .toList(),
+              labelColor: Colors.red,
+              unselectedLabelColor: Colors.black87,
+              indicatorColor: Colors.red,
+              labelStyle: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              unselectedLabelStyle: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ),
           body: TabBarView(
@@ -140,6 +151,23 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
     super.initState();
     _loadData();
     _setupCodeListener();
+  }
+
+  @override
+  void didUpdateWidget(ExchangeFormView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.market != widget.market) {
+      _loadData();
+      _clearForm();
+    }
+  }
+
+  void _clearForm() {
+    _codeController.clear();
+    _priceController.clear();
+    _amountController.clear();
+    _availableAmountController.clear();
+    _purchaserCodeController.clear();
   }
 
   void _loadData() {
@@ -206,7 +234,7 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
           width: double.infinity,
           height: 44,
           child: ElevatedButton(
-            onPressed: state is ExchangeSubmitting
+            onPressed: state.isSubmitting
                 ? null
                 : () => _handleSubmit(context),
             style: ElevatedButton.styleFrom(
@@ -215,7 +243,7 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
-            child: state is ExchangeSubmitting
+            child: state.isSubmitting
                 ? SizedBox(
                     width: 24,
                     height: 24,
@@ -243,8 +271,8 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
             code: _codeController.text,
             name: '',
             amount: _amountController.text,
-            price: widget.market == '上证' ? _priceController.text : '',
-            purchaserCode: widget.market == '深证' ? _purchaserCodeController.text : '',
+            price: widget.market == MarketType.sh ? _priceController.text : '',
+            purchaserCode: widget.market == MarketType.sz ? _purchaserCodeController.text : '',
             market: widget.market,
             type: widget.exchangeType,
           ),
@@ -383,20 +411,18 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
   Widget _buildDataTable() {
     return BlocConsumer<ExchangeBloc, ExchangeState>(
       listener: (context, state) {
-        if (state is SecurityInfoLoaded) {
-          _availableAmountController.text = state.availableAmount;
+        if (state.availableAmount != null) {
+          _availableAmountController.text = state.availableAmount!;
         }
       },
       builder: (context, state) {
-        if (state is ExchangeLoading) {
+        if (state.isLoading) {
           return Center(child: CircularProgressIndicator());
         }
 
-        if (state is ExchangeError) {
-          return Center(child: Text(state.message));
+        if (state.error != null) {
+          return Center(child: Text(state.error!));
         }
-
-        final records = state is ExchangeLoaded ? state.records : <ExchangeRecord>[];
 
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -414,7 +440,7 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
                     '收购人代码',
                     '可用数量',
                   ].map((label) => DataColumn(label: Text(label))).toList(),
-            rows: records.map((record) {
+            rows: state.records.map((record) {
               return DataRow(
                 cells: widget.market == MarketType.sh
                     ? [
@@ -446,7 +472,7 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
   void _fillFormFromRecord(ExchangeRecord record) {
     _codeController.text = record.code;
     _availableAmountController.text = record.availableAmount;
-    if (widget.market == '上证') {
+    if (widget.market == MarketType.sh) {
       _priceController.text = record.price;
     } else {
       _purchaserCodeController.text = record.purchaserCode;
