@@ -1,5 +1,6 @@
 class TenderOfferConstants {
 
+
   // 防止实例化
   TenderOfferConstants._();
   
@@ -8,6 +9,7 @@ class TenderOfferConstants {
   static const double defaultPadding = 16.0;
   static const double labelWidth = 80.0;
   static const double buttonHeight = 48.0;
+  static var formFieldHeight = 48.0;
   
   // 时间常量
   static const Duration debounceTime = Duration(milliseconds: 500);
