@@ -5,6 +5,8 @@ import 'blocs/exchange_bloc.dart';
 import 'models/exchange_record.dart';
 import 'models/exchange_types.dart';
 import 'models/market_types.dart';
+import 'constants/form_config.dart';
+import 'widgets/form_field.dart';
 
 void main() {
   runApp(MyApp());
@@ -139,71 +141,50 @@ class ExchangeFormView extends StatefulWidget {
 }
 
 class _ExchangeFormViewState extends State<ExchangeFormView> {
-  final _codeController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _amountController = TextEditingController();
-  final _availableAmountController = TextEditingController();
-  final _purchaserCodeController = TextEditingController();
+  final Map<String, TextEditingController> _controllers = {};
   Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
+    _initControllers();
     _loadData();
-    _setupCodeListener();
   }
 
-  @override
-  void didUpdateWidget(ExchangeFormView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.market != widget.market) {
-      _loadData();
-      _clearForm();
+  void _initControllers() {
+    final fields = FormConfig.getFields(widget.market);
+    for (var field in fields) {
+      _controllers[field.label] = TextEditingController();
+      if (field.isCode) {
+        _controllers[field.label]!.addListener(_setupCodeListener);
+      }
     }
   }
 
-  void _clearForm() {
-    _codeController.clear();
-    _priceController.clear();
-    _amountController.clear();
-    _availableAmountController.clear();
-    _purchaserCodeController.clear();
-  }
-
-  void _loadData() {
-    context.read<ExchangeBloc>().add(
-          LoadExchangeData(
-            market: widget.market,
-            type: widget.exchangeType,
-          ),
-        );
-  }
-
   void _setupCodeListener() {
-    _codeController.addListener(() {
-      if (_debounce?.isActive ?? false) _debounce!.cancel();
-      _debounce = Timer(Duration(milliseconds: 500), () {
-        final code = _codeController.text;
-        if (code.length == 6) {
-          context.read<ExchangeBloc>().add(
-                QuerySecurityInfo(
-                  code: code,
-                  market: widget.market,
-                ),
-              );
-        }
-      });
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(Duration(milliseconds: 500), () {
+      final codeLabel = widget.market == MarketType.sh ? '要约代码' : '证券代码';
+      final code = _getController(codeLabel).text;
+      if (code.length == 6) {
+        context.read<ExchangeBloc>().add(
+              QuerySecurityInfo(
+                code: code,
+                market: widget.market,
+              ),
+            );
+      }
     });
+  }
+
+  TextEditingController _getController(String label) {
+    return _controllers[label]!;
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    _codeController.dispose();
-    _priceController.dispose();
-    _amountController.dispose();
-    _availableAmountController.dispose();
-    _purchaserCodeController.dispose();
+    _controllers.forEach((_, controller) => controller.dispose());
     super.dispose();
   }
 
@@ -266,13 +247,14 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
   }
 
   void _handleSubmit(BuildContext context) {
+    final codeLabel = widget.market == MarketType.sh ? '要约代码' : '证券代码';
     context.read<ExchangeBloc>().add(
           SubmitExchangeForm(
-            code: _codeController.text,
+            code: _getController(codeLabel).text,
             name: '',
-            amount: _amountController.text,
-            price: widget.market == MarketType.sh ? _priceController.text : '',
-            purchaserCode: widget.market == MarketType.sz ? _purchaserCodeController.text : '',
+            amount: _getController('预收数量').text,
+            price: widget.market == MarketType.sh ? _getController('申报价格').text : '',
+            purchaserCode: widget.market == MarketType.sz ? _getController('收购人代码').text : '',
             market: widget.market,
             type: widget.exchangeType,
           ),
@@ -280,106 +262,92 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
   }
 
   Widget _buildFormSection() {
-    if (widget.market == MarketType.sh) {
-      return Column(
-        children: [
-          _buildFormField('要约代码', _codeController),
-          _buildFormField('申报价格', _priceController),
-          _buildFormField('预收数量', _amountController),
-          _buildFormField('可用数量', _availableAmountController, readOnly: true),
-        ],
-      );
-    } else {
-      return Column(
-        children: [
-          _buildFormField('证券代码', _codeController),
-          _buildFormField('收购人代码', _purchaserCodeController),
-          _buildFormField('预收数量', _amountController),
-          _buildFormField('可用数量', _availableAmountController, readOnly: true),
-        ],
-      );
-    }
+    final fields = FormConfig.getFields(widget.market);
+    return Column(
+      children: fields.map((field) {
+        if (field.label == '可用数量') {
+          return CustomFormField(
+            label: field.label,
+            hint: field.hint,
+            controller: _getController(field.label),
+            readOnly: true,
+            isAvailableAmount: true,
+          );
+        }
+        return CustomFormField(
+          label: field.label,
+          hint: field.hint,
+          controller: _getController(field.label),
+          readOnly: field.readOnly,
+        );
+      }).toList(),
+    );
   }
 
-  Widget _buildFormField(String label, TextEditingController controller,
-      {bool readOnly = false}) {
-    String hintText = '';
-    
-    if (widget.market == MarketType.sh) {
-      switch (label) {
-        case '要约代码':
-          hintText = '请输入6位要约代码';
-          break;
-        case '申报价格':
-          hintText = '请输入申报价格';
-          break;
-        case '预收数量':
-          hintText = '请输入预收数量';
-          break;
-        case '可用数量':
-          hintText = '自动计算可用数量';
-          break;
-      }
-    } else {
-      switch (label) {
-        case '证券代码':
-          hintText = '请输入6位证券代码';
-          break;
-        case '收购人代码':
-          hintText = '请输入收购人代码';
-          break;
-        case '预收数量':
-          hintText = '请输入预收数量';
-          break;
-        case '可用数量':
-          hintText = '自动计算可用数量';
-          break;
-      }
-    }
+  Widget _buildDataTable() {
+    return BlocConsumer<ExchangeBloc, ExchangeState>(
+      listener: (context, state) {
+        if (state.availableAmount != null) {
+          _getController('可用数量').text = state.availableAmount!;
+        }
+      },
+      builder: (context, state) {
+        if (state.isLoading) {
+          return Center(child: CircularProgressIndicator());
+        }
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-              ),
-            ),
+        if (state.error != null) {
+          return Center(child: Text(state.error!));
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columns: FormConfig.getTableColumns(widget.market)
+                .map((label) => DataColumn(label: Text(label)))
+                .toList(),
+            rows: _buildTableRows(state.records),
           ),
-          SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              readOnly: readOnly,
-              decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 14,
-                ),
-                filled: true,
-                fillColor: readOnly ? Colors.grey[100] : Colors.white,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  List<DataRow> _buildTableRows(List<ExchangeRecord> records) {
+    return records.map((record) {
+      final cells = widget.market == MarketType.sh
+          ? [
+              record.code,
+              record.name,
+              record.price,
+              record.availableAmount,
+            ]
+          : [
+              record.code,
+              record.name,
+              record.purchaserCode,
+              record.availableAmount,
+            ];
+
+      return DataRow(
+        cells: cells.asMap().entries.map((entry) {
+          return DataCell(
+            Text(entry.value),
+            onTap: entry.key == 0 ? () => _fillFormFromRecord(record) : null,
+          );
+        }).toList(),
+      );
+    }).toList();
+  }
+
+  void _fillFormFromRecord(ExchangeRecord record) {
+    _getController(widget.market == MarketType.sh ? '要约代码' : '证券代码').text = record.code;
+    _getController('可用数量').text = record.availableAmount;
+    if (widget.market == MarketType.sh) {
+      _getController('申报价格').text = record.price;
+    } else {
+      _getController('收购人代码').text = record.purchaserCode;
+    }
   }
 
   Widget _buildSubTabs() {
@@ -408,74 +376,12 @@ class _ExchangeFormViewState extends State<ExchangeFormView> {
     );
   }
 
-  Widget _buildDataTable() {
-    return BlocConsumer<ExchangeBloc, ExchangeState>(
-      listener: (context, state) {
-        if (state.availableAmount != null) {
-          _availableAmountController.text = state.availableAmount!;
-        }
-      },
-      builder: (context, state) {
-        if (state.isLoading) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (state.error != null) {
-          return Center(child: Text(state.error!));
-        }
-
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columns: widget.market == MarketType.sh
-                ? [
-                    '要约代码',
-                    '证券名称',
-                    '申报价格',
-                    '可用数量',
-                  ].map((label) => DataColumn(label: Text(label))).toList()
-                : [
-                    '证券代码',
-                    '证券名称',
-                    '收购人代码',
-                    '可用数量',
-                  ].map((label) => DataColumn(label: Text(label))).toList(),
-            rows: state.records.map((record) {
-              return DataRow(
-                cells: widget.market == MarketType.sh
-                    ? [
-                        DataCell(
-                          Text(record.code),
-                          onTap: () => _fillFormFromRecord(record),
-                        ),
-                        DataCell(Text(record.name)),
-                        DataCell(Text(record.price)),
-                        DataCell(Text(record.availableAmount)),
-                      ]
-                    : [
-                        DataCell(
-                          Text(record.code),
-                          onTap: () => _fillFormFromRecord(record),
-                        ),
-                        DataCell(Text(record.name)),
-                        DataCell(Text(record.purchaserCode)),
-                        DataCell(Text(record.availableAmount)),
-                      ],
-              );
-            }).toList(),
+  void _loadData() {
+    context.read<ExchangeBloc>().add(
+          LoadExchangeData(
+            market: widget.market,
+            type: widget.exchangeType,
           ),
         );
-      },
-    );
-  }
-
-  void _fillFormFromRecord(ExchangeRecord record) {
-    _codeController.text = record.code;
-    _availableAmountController.text = record.availableAmount;
-    if (widget.market == MarketType.sh) {
-      _priceController.text = record.price;
-    } else {
-      _purchaserCodeController.text = record.purchaserCode;
-    }
   }
 }
