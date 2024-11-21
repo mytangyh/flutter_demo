@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-class ExchangeRecord extends Equatable {
+class TenderOfferRecord extends Equatable {
   final String code;
   final String name;
   final String amount;
@@ -8,7 +8,7 @@ class ExchangeRecord extends Equatable {
   final String availableAmount;
   final String purchaserCode;
 
-  const ExchangeRecord({
+  const TenderOfferRecord({
     required this.code,
     required this.name,
     required this.amount,

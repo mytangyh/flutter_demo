@@ -1,2 +1,0 @@
-
-enum ExchangeType { reserve, cancel }
