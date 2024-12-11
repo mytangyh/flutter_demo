@@ -1,11 +1,12 @@
 import 'market_type.dart';
 
+// 表单字段配置类
 class FormFieldConfig {
-  final String label;
-  final String hint;
-  final bool readOnly;
-  final bool isCode;
-  final FieldType type;
+  final String label;    // 字段标签
+  final String hint;     // 提示文本
+  final bool readOnly;   // 是否只读
+  final bool isCode;     // 是否为证券代码字段
+  final FieldType type;  // 字段类型
 
   const FormFieldConfig({
     required this.label,
@@ -16,16 +17,20 @@ class FormFieldConfig {
   });
 }
 
+// 字段类型枚举
 enum FieldType {
-  input,
-  availableAmount,
+  input,           // 普通输入框
+  availableAmount, // 可用数量字段
 }
 
+// 表单配置类
 class FormConfig {
+  // 获取指定市场的表单字段配置
   static List<FormFieldConfig> getFields(MarketType market) {
     return market == MarketType.sh ? _shFields : _szFields;
   }
 
+  // 上海市场表单字段配置
   static const _shFields = [
     FormFieldConfig(
       label: '要约代码',
@@ -48,6 +53,7 @@ class FormConfig {
     ),
   ];
 
+  // 深圳市场表单字段配置
   static const _szFields = [
     FormFieldConfig(
       label: '证券代码',

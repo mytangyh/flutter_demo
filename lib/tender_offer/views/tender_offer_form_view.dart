@@ -11,6 +11,8 @@ import '../models/form_config.dart';
 import '../widgets/tender_offer_form_field.dart';
 import '../constants/tender_offer_constants.dart';
 
+// 要约收购表单视图
+// 包含表单输入区域、提交按钮和数据列表展示
 class TenderOfferFormView extends StatefulWidget {
   final TenderOfferType type;
   final MarketType market;
@@ -28,7 +30,9 @@ class TenderOfferFormView extends StatefulWidget {
 }
 
 class _TenderOfferFormViewState extends State<TenderOfferFormView> {
+  // 存储所有表单字段的控制器
   final Map<String, TextEditingController> _controllers = {};
+  // 用于证券代码输入防抖
   Timer? _debounce;
 
   @override
@@ -36,6 +40,7 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
     super.initState();
     _initControllers();
     _loadData();
+    // 深圳市场需要加载额外的Tab数据
     if (widget.showSubTabs) {
       context.read<TenderOfferBloc>().add(
             LoadTabData(isPurchaserTab: true),
@@ -43,6 +48,7 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
     }
   }
 
+  // 初始化表单控制器
   void _initControllers() {
     final fields = FormConfig.getFields(widget.market);
     for (var field in fields) {
@@ -53,7 +59,9 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
     }
   }
 
+  // 设置证券代码输入监听器
   void _setupCodeListener() {
+    // 使用防抖处理代码查询
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(TenderOfferConstants.debounceTime, () {
       final codeLabel = widget.market.isSh ? '要约代码' : '证券代码';
@@ -96,6 +104,20 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
     );
   }
 
+  // 构建表单区域
+  Widget _buildFormSection() {
+    final fields = FormConfig.getFields(widget.market);
+    return Column(
+      children: fields.map((field) {
+        return TenderOfferFormField(
+          config: field,
+          controller: _getController(field.label),
+        );
+      }).toList(),
+    );
+  }
+
+  // 构建提交按钮
   Widget _buildSubmitButton() {
     return BlocBuilder<TenderOfferBloc, TenderOfferState>(
       builder: (context, state) {
@@ -134,6 +156,7 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
     );
   }
 
+  // 处理表单提交
   void _handleSubmit(BuildContext context) {
     final codeLabel = widget.market.isSh ? '要约代码' : '证券代码';
     context.read<TenderOfferBloc>().add(
@@ -157,18 +180,7 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
         );
   }
 
-  Widget _buildFormSection() {
-    final fields = FormConfig.getFields(widget.market);
-    return Column(
-      children: fields.map((field) {
-        return TenderOfferFormField(
-          config: field,
-          controller: _getController(field.label),
-        );
-      }).toList(),
-    );
-  }
-
+  // 构建数据表格
   Widget _buildDataTable() {
     return BlocConsumer<TenderOfferBloc, TenderOfferState>(
       listener: (context, state) {
@@ -236,6 +248,7 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
     }
   }
 
+  // 构建深圳市场的子Tab页面
   Widget _buildSubTabs() {
     return DefaultTabController(
       length: 2,

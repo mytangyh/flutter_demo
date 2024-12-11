@@ -28,17 +28,15 @@ class TenderOfferFormField extends StatelessWidget {
             vertical: TenderOfferConstants.defaultSpacing,
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                width: TenderOfferConstants.labelWidth,
-                child: Text(
-                  '可用数量：',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    height: 1.0,
-                  ),
+              Text(
+                '可用数量：',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  height: 1.0,
                 ),
               ),
               Text(

@@ -6,9 +6,11 @@ import '../models/tender_offer_type.dart';
 import '../repositories/mock_tender_offer_repository.dart';
 import 'tender_offer_form_view.dart';
 
+// 要约收购页面组件
+// 用于展示要约收购的主界面，包含上海和深圳市场的Tab切换
 class TenderOfferPage extends StatelessWidget {
   final String title;
-  final TenderOfferType type;
+  final TenderOfferType type; // 要约类型：预受要约/解除要约
 
   const TenderOfferPage({
     super.key,
@@ -27,6 +29,7 @@ class TenderOfferPage extends StatelessWidget {
   }
 }
 
+// 要约收购页面内容组件
 class _TenderOfferPageContent extends StatelessWidget {
   final String title;
   final TenderOfferType type;
@@ -51,9 +54,11 @@ class _TenderOfferPageContent extends StatelessWidget {
     return AppBar(
       title: Text(title),
       bottom: TabBar(
+        // 根据市场类型(上海/深圳)构建对应的Tab
         tabs: MarketType.values
             .map((market) => Tab(text: market.displayName(type)))
             .toList(),
+        // Tab样式配置
         labelColor: Colors.red,
         unselectedLabelColor: Colors.black87,
         indicatorColor: Colors.red,
