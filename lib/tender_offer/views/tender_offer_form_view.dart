@@ -61,7 +61,6 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
 
   // 设置证券代码输入监听器
   void _setupCodeListener() {
-    // 使用防抖处理代码查询
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(TenderOfferConstants.debounceTime, () {
       final codeLabel = widget.market.isSh ? '要约代码' : '证券代码';
@@ -107,13 +106,22 @@ class _TenderOfferFormViewState extends State<TenderOfferFormView> {
   // 构建表单区域
   Widget _buildFormSection() {
     final fields = FormConfig.getFields(widget.market);
-    return Column(
-      children: fields.map((field) {
-        return TenderOfferFormField(
-          config: field,
-          controller: _getController(field.label),
-        );
-      }).toList(),
+    return BlocListener<TenderOfferBloc, TenderOfferState>(
+      // listenWhen: (previous, current) => 
+      //     previous.availableAmount != current.availableAmount,
+      listener: (context, state) {
+        if (state.availableAmount != null) {
+          _getController('可用数量').text = state.availableAmount!;
+        }
+      },
+      child: Column(
+        children: fields.map((field) {
+          return TenderOfferFormField(
+            config: field,
+            controller: _getController(field.label),
+          );
+        }).toList(),
+      ),
     );
   }
 
