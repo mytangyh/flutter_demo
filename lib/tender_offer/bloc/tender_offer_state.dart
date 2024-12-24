@@ -10,6 +10,7 @@ class TenderOfferState {
   final List<TenderOfferRecord> records;
   final List<PurchaserRecord> purchaserRecords;
   final List<PositionRecord> positionRecords;
+  final SecurityInfo? securityInfo;
 
   const TenderOfferState({
     this.isLoading = false,
@@ -19,6 +20,7 @@ class TenderOfferState {
     this.records = const [],
     this.purchaserRecords = const [],
     this.positionRecords = const [],
+    this.securityInfo,
   });
 
   TenderOfferState copyWith({
